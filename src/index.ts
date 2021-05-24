@@ -3,7 +3,7 @@ import msgpack = require('@msgpack/msgpack');
 import util = require('util');
 
 function showObject(obj: Object) {
-    console.log(util.inspect(obj, {compact: true, colors: true, depth: null}));
+    console.log(util.inspect(obj, { compact: true, colors: true, depth: null }));
 }
 
 class Pawn {
@@ -50,7 +50,7 @@ class Player {
             z: number
         }>
     } {
-        const pawnMap = new Map<number, {x: number, y: number, z: number}>();
+        const pawnMap = new Map<number, { x: number, y: number, z: number }>();
         this.pawns.forEach((v, k) => {
             pawnMap.set(k, v.serialize());
         });
@@ -82,7 +82,7 @@ class GameState {
             }>
         }>
     } {
-        const playerMap = new Map<number, {uuid: number, pawns: Map<number, {x: number, y: number, z: number}>}>();
+        const playerMap = new Map<number, { uuid: number, pawns: Map<number, { x: number, y: number, z: number }> }>();
         this.players.forEach((v, k) => {
             playerMap.set(k, v.serialize());
         });
@@ -100,16 +100,16 @@ class Server {
             return;
         }
         switch (message.t as string) {
-        case "update":
-            this.processUpdateMessage(message);
-            break;
-        case "register":
-            console.log("register message");
-            this.processRegisterPlayerMessage(message);
-            break;
-        default:
-            console.log("unknown message: " + message.t);
-            break;
+            case "update":
+                this.processUpdateMessage(message);
+                break;
+            case "register":
+                console.log("register message");
+                this.processRegisterPlayerMessage(message);
+                break;
+            default:
+                console.log("unknown message: " + message.t);
+                break;
         }
     }
 
@@ -120,22 +120,30 @@ class Server {
 
     private processUpdateMessage(message: any) {
         const msg = message as {
-            players: [{
-                uuid: number,
-                pawns: Map<number, {
-                    x: number,
-                    y: number,
-                    z: number,
-                    hp?: number
-                }>
-            }]
+            players: {
+                [index: number]: {
+                    uuid: number,
+                    pawns: {
+                        [index: number]: {
+                            x: number,
+                            y: number,
+                            z: number,
+                            hp?: number
+                        }
+                    }
+                }
+            }
         };
 
-        for (const playerInfo of msg.players) {
+        for (const playerInfoUuid in msg.players) {
+            const playerInfo = msg.players[playerInfoUuid];
             const player = this.gameState.players.get(playerInfo.uuid);
             if (player == null) continue;
-            
-            playerInfo.pawns.forEach((pawnInfo, pawnIdx) => {
+
+            //console.log("playerInfo.pawns: " + playerInfo.pawns);
+            for (const pawnIdxs in playerInfo.pawns) {
+                const pawnIdx = parseInt(pawnIdxs);
+                const pawnInfo = playerInfo.pawns[pawnIdxs];
                 let pawn = player.pawns.get(pawnIdx);
                 if (pawn == null) {
                     pawn = new Pawn();
@@ -147,8 +155,8 @@ class Server {
                 if (pawnInfo.hp) {
                     pawn.hp = pawnInfo.hp;
                 }
-            });
-        };
+            }
+        }
     }
 }
 
