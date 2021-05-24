@@ -44,15 +44,19 @@ class Player {
 
     serialize(): {
         uuid: number,
-        pawns: Map<number, {
+        pawns: {[index: number]: {
             x: number,
             y: number,
             z: number
-        }>
+        }}
     } {
-        const pawnMap = new Map<number, { x: number, y: number, z: number }>();
+        const pawnMap: {[index: number]: {
+            x: number,
+            y: number,
+            z: number
+        }} = {};
         this.pawns.forEach((v, k) => {
-            pawnMap.set(k, v.serialize());
+            pawnMap[k] = v.serialize();
         });
         return {
             uuid: this.uuid,
@@ -73,18 +77,28 @@ class GameState {
     }
 
     serialize(): {
-        players: Map<number, {
+        players: {[index: number]: {
             uuid: number,
-            pawns: Map<number, {
+            pawns: {[index: number]: {
                 x: number,
                 y: number,
                 z: number
-            }>
-        }>
+            }}
+        }}
     } {
-        const playerMap = new Map<number, { uuid: number, pawns: Map<number, { x: number, y: number, z: number }> }>();
+        const playerMap: {[index: number]: {
+            uuid: number,
+            pawns: {[index: number]: {
+                x: number,
+                y: number,
+                z: number
+            }}
+        }} = {};
         this.players.forEach((v, k) => {
-            playerMap.set(k, v.serialize());
+            playerMap[k] = {
+                uuid: v.uuid,
+                pawns: v.serialize()
+            }
         });
         return {
             players: playerMap
@@ -173,6 +187,11 @@ const server = net.createServer((conn) => {
         const msg = msgpack.decode(data);
         game.processClientMessage(msg);
         showObject(game);
+        const replyData = game.gameState.serialize();
+        showObject(replyData);
+        const reply = msgpack.encode(replyData);
+        conn.write(reply);
+        console.log("sent back " + reply.length + " bytes");
     });
 
     conn.on('close', () => {
