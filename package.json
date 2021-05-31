@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "exec": "webpack && node dist/bundle.js"
+    "exec": "node dist/bundle.js"
   },
   "author": "tinaxd",
   "license": "UNLICENSED",
@@ -17,6 +17,6 @@
     "webpack-cli": "^4.7.0"
   },
   "dependencies": {
-    "@msgpack/msgpack": "^2.7.0"
+    "@msgpack/msgpack": "github:tinaxd/msgpack-javascript"
   }
 }

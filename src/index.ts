@@ -44,19 +44,19 @@ class Player {
 
     serialize(): {
         uuid: number,
-        pawns: {[index: number]: {
+        pawns: Map<number, {
             x: number,
             y: number,
             z: number
-        }}
+        }>
     } {
-        const pawnMap: {[index: number]: {
+        const pawnMap = new Map<number, {
             x: number,
             y: number,
             z: number
-        }} = {};
+        }>();
         this.pawns.forEach((v, k) => {
-            pawnMap[k] = v.serialize();
+            pawnMap.set(k, v.serialize());
         });
         return {
             uuid: this.uuid,
@@ -77,28 +77,28 @@ class GameState {
     }
 
     serialize(): {
-        players: {[index: number]: {
+        players: Map<number, {
             uuid: number,
-            pawns: {[index: number]: {
+            pawns: Map<number, {
                 x: number,
                 y: number,
                 z: number
-            }}
-        }}
+            }>
+        }>
     } {
-        const playerMap: {[index: number]: {
+        const playerMap = new Map<number, {
             uuid: number,
-            pawns: {[index: number]: {
+            pawns: Map<number, {
                 x: number,
                 y: number,
                 z: number
-            }}
-        }} = {};
+            }>
+        }>();
         this.players.forEach((v, k) => {
-            playerMap[k] = {
+            playerMap.set(k, {
                 uuid: v.uuid,
-                pawns: v.serialize()
-            }
+                pawns: v.serialize().pawns
+            });
         });
         return {
             players: playerMap
@@ -176,7 +176,11 @@ class Server {
 
 const game = new Server();
 
+import fs = require('fs');
+
 const server = net.createServer((conn) => {
+    let first = true;
+
     console.log('server listening on port 15243');
 
     conn.on('connect', () => {
@@ -190,6 +194,10 @@ const server = net.createServer((conn) => {
         const replyData = game.gameState.serialize();
         showObject(replyData);
         const reply = msgpack.encode(replyData);
+        if (first) {
+            fs.writeFileSync("msgpackdump", reply);
+            first = false;
+        }
         conn.write(reply);
         console.log("sent back " + reply.length + " bytes");
     });
